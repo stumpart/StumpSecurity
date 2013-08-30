@@ -17,7 +17,7 @@ class Arrays
         $levelExplode = explode(".", $level);
         $key = array_shift($levelExplode);
 
-        if(empty($level))
+        if(empty($levelExplode))
         {
             return array_key_exists($key, $subject) ? $subject[$key] : null;
         }
