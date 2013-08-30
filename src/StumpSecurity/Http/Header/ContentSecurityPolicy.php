@@ -5,6 +5,7 @@ namespace StumpSecurity\Http\Header;
 use Zend\Http\Header\HeaderInterface;
 use StumpSecurity\Http\Header\Values\ValuesInterface;
 use Zend\Stdlib\ArrayObject;
+use StumpSecurity\Util\Arrays;
 
 /**
  * Class ContentSecurityPolicy
@@ -50,22 +51,36 @@ class ContentSecurityPolicy implements HeaderInterface,ValuesInterface
 
     public function buildDirectiveValues()
     {
-        if(array_key_exists('xss', $this->config))
-        {
-            if(array_key_exists('allow', $this->config['xss']))
-            {
-                $config = $this->config['xss']['allow'];
-                //$config['default'] = array('self');
+        $allowing = Arrays::getRecursive($this->config, 'xss.allow');
 
-                foreach($config as $key=>$value)
-                {
-                    $keyClass = __NAMESPACE__.'\Values\CSP'.ucfirst($key);
-                    $valuesInst = new $keyClass($this);
-                    $valuesInst->setValues($value)->generate();
-                    $this->data[]  = $valuesInst;
-                }
+        if(is_array($allowing))
+        {
+            foreach($allowing as $key=>$value)
+            {
+                $this->addValue($key, $value);
             }
         }
+
+        $this->handleDirectiveViolationReport();
+    }
+
+
+    private function handleDirectiveViolationReport()
+    {
+        $allowing = Arrays::getRecursive($this->config, 'violation-reports.csp.uri');
+
+        if(!is_null($allowing))
+        {
+            $this->addValue('report', $allowing);
+        }
+    }
+
+    private function addValue($classKey, $value)
+    {
+        $keyClass = __NAMESPACE__.'\Values\CSP'.ucfirst($classKey);
+        $valuesInst = new $keyClass($this);
+        $valuesInst->setValues($value)->generate();
+        $this->data[]  = $valuesInst;
     }
 
     public function getFieldName()

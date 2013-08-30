@@ -16,8 +16,14 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class Security implements FactoryInterface
 {
 
+    /**
+     * @var
+     */
     private $config;
 
+    /**
+     * @var
+     */
     private $serviceLocator;
 
     /**
@@ -46,6 +52,9 @@ class Security implements FactoryInterface
         $this->config = $serviceLocator->get('config');
     }
 
+    /**
+     *
+     */
     public function getRequestDirectives()
     {
         if(array_key_exists('xss', $this->config))

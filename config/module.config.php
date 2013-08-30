@@ -21,6 +21,8 @@ return array(
         )
     ),
     'violation-reports' =>array(
-
+        'csp'=>array(
+            'uri'=>'http://barrygong.com/application/security/violation'
+        )
     )
 );
