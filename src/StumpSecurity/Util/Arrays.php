@@ -16,10 +16,11 @@ class Arrays
     {
         $levelExplode = explode(".", $level);
         $key = array_shift($levelExplode);
+        $result = array_key_exists($key, $subject) ? $subject[$key] : null;
 
-        if(empty($levelExplode))
+        if(empty($levelExplode) || is_null($result))
         {
-            return array_key_exists($key, $subject) ? $subject[$key] : null;
+            return $result;
         }
         else
         {

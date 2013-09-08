@@ -6,22 +6,31 @@ return array(
             'http://barrygong.com/'
         )
     ),
-    'ensurehttps'  => array(
-
+    'force-https'  => array(
+        'expire-time'=>17280
     ),
-    'cross-origin '=> array(
-
+    'cross-origin'=> array(
+        'allow'=>array(
+            'headers'=>'X-PINGOTHER',
+            'methods'=>'POST,GET,OPTIONS',
+            'max-age'=>''
+        ),
+        'include' => array(
+            'Application\Controller\Security'
+        ),
     ),
     'xss' => array(
         'allow'=>array(
-            'scripts' => array('http://barrygong.com/js', 'http://barrymedia.com/js', 'inline', 'eval'),
-            'object' => array('http://barrygong.com'),
-            'style'   => array('http://micoballer2003.com', 'http://localhost:10088/css/', 'inline'),
-            //'image'   => array(),
-        )
+            'scripts' => array('http://barrygong.com/js','http://localhost:10088/js/','http://ajax.googleapis.com', 'inline', 'eval'),
+            'object'  => array('http://barrygong.com'),
+            'style'   => array('http://micoballer2003.com', 'http://localhost:10088/css/', 'inline')
+        ),
+        'include' => array(
+            'Application\Controller\Security'
+        ),
     ),
-    'violation-reports' =>array(
-        'csp'=>array(
+    'violation-reports' => array(
+        'csp' => array(
             'uri'=>'http://barrygong.com/application/security/violation'
         )
     )

@@ -7,7 +7,7 @@
 namespace StumpSecurity\Defenses;
 
 
-class EnsureHttps
+interface VerifierAwareInterface
 {
-
-}
+    public function setVerifier( Verifier $v);
+} 

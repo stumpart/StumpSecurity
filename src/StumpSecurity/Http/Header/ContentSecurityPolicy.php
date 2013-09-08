@@ -2,10 +2,15 @@
 
 namespace StumpSecurity\Http\Header;
 
-use Zend\Http\Header\HeaderInterface;
-use StumpSecurity\Http\Header\Values\ValuesInterface;
-use Zend\Stdlib\ArrayObject;
+use StumpSecurity\Defenses\Componentized;
+use StumpSecurity\Defenses\Verifier;
+use StumpSecurity\Defenses\VerifierAwareInterface;
 use StumpSecurity\Util\Arrays;
+use StumpSecurity\Http\Header\Values\ValuesInterface;
+use Zend\File\Exception\InvalidArgumentException;
+use Zend\Http\Header\HeaderInterface;
+use Zend\Stdlib\ArrayObject;
+
 
 /**
  * Class ContentSecurityPolicy
@@ -15,7 +20,11 @@ use StumpSecurity\Util\Arrays;
  * @link http://www.w3.org/TR/CSP/
  *
  */
-class ContentSecurityPolicy implements HeaderInterface,ValuesInterface
+class ContentSecurityPolicy implements
+    HeaderInterface,
+    ValuesInterface,
+    Componentized
+    //VerifierAwareInterface
 {
     const HEADER_FIELD = 'Content-Security-Policy';
 
@@ -37,10 +46,19 @@ class ContentSecurityPolicy implements HeaderInterface,ValuesInterface
 
     private $config = array();
 
+    /**
+     * @var \StumpSecurity\Defenses\Verifier
+     */
+    private $verifier;
+
+    /**
+     * @var string
+     */
+    private $component;
+
     public function __construct( array $array = array())
     {
         $this->setConfig($array);
-        $this->buildDirectiveValues();
     }
 
     public static function fromString($headerLine)
@@ -49,9 +67,27 @@ class ContentSecurityPolicy implements HeaderInterface,ValuesInterface
         return $header;
     }
 
+    public function execute()
+    {
+        $this->buildDirectiveValues();
+    }
+
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function buildDirectiveValues()
     {
-        $allowing = Arrays::getRecursive($this->config, 'xss.allow');
+        if(is_null($this->verifier)){
+            throw new \InvalidArgumentException('Verifier is null');
+        }
+
+        $this->handleDirectiveXSS();
+        $this->handleDirectiveViolationReport();
+    }
+
+    private function handleDirectiveXSS()
+    {
+        $allowing = Arrays::getRecursive($this->config, 'allow');
 
         if(is_array($allowing))
         {
@@ -60,10 +96,7 @@ class ContentSecurityPolicy implements HeaderInterface,ValuesInterface
                 $this->addValue($key, $value);
             }
         }
-
-        $this->handleDirectiveViolationReport();
     }
-
 
     private function handleDirectiveViolationReport()
     {
@@ -71,16 +104,19 @@ class ContentSecurityPolicy implements HeaderInterface,ValuesInterface
 
         if(!is_null($allowing))
         {
-            $this->addValue('report', $allowing);
+            $this->addValue('report', array($allowing));
         }
     }
 
     private function addValue($classKey, $value)
     {
-        $keyClass = __NAMESPACE__.'\Values\CSP'.ucfirst($classKey);
-        $valuesInst = new $keyClass($this);
-        $valuesInst->setValues($value)->generate();
-        $this->data[]  = $valuesInst;
+        if($this->verifier->canApply("allow.".$classKey))
+        {
+            $keyClass = __NAMESPACE__.'\Values\CSP'.ucfirst($classKey);
+            $valuesInst = new $keyClass($this);
+            $valuesInst->setValues($value)->generate();
+            $this->data[]  = $valuesInst;
+        }
     }
 
     public function getFieldName()
@@ -106,5 +142,19 @@ class ContentSecurityPolicy implements HeaderInterface,ValuesInterface
     public function getKeywordMap()
     {
         return $this->keyMapping;
+    }
+
+    public function setVerifier(Verifier $v)
+    {
+        $this->verifier = $v;
+    }
+
+    /**
+     * @param string $comp
+     * @return void
+     */
+    public function setComponent($comp)
+    {
+        $this->component = $comp;
     }
 }

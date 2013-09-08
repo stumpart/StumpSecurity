@@ -9,6 +9,8 @@ namespace StumpSecurity\Http\Header\Values;
 
 abstract class AValues
 {
+    protected $directiveValueGlue = ' ';
+
     protected $keyWordValues = array();
 
     protected $values;
@@ -23,6 +25,8 @@ abstract class AValues
      */
     protected $valueString = '';
 
+    protected $listOfUnwanted = array('include', 'exclude');
+
     public function __construct( ValuesInterface $valObject)
     {
         $this->valObject = $valObject;
@@ -36,15 +40,20 @@ abstract class AValues
 
     public function generate()
     {
-        $this->filterKeyWords();
+        $this->filterKeyWordsAndUnwanted();
+
         if(!empty($this->values) && is_array($this->values))
         {
             $this->values   = array_merge(array(static::DIRECTIVE), $this->values, $this->keyWordValues);
-            $this->valueString = implode(' ', $this->values);
+            $this->valueString = implode($this->directiveValueGlue, $this->values);
         }
     }
 
-    protected function filterKeyWords()
+    /**
+     * Filter Remove Keywords and unwanted values
+     * @return void
+     */
+    protected function filterKeyWordsAndUnwanted()
     {
         $map = $this->valObject->getKeywordMap();
         $keywordValues =& $this->keyWordValues;
@@ -52,14 +61,28 @@ abstract class AValues
         $this->values = array_filter($this->values,
                         function($val) use ($map, &$keywordValues)
                         {
-                            if(array_key_exists($val, $map))
-                            {
-                                $keywordValues[] = $map[$val];
-                                return false;
+                            if(is_string($val)){
+                                if(array_key_exists($val, $map)){
+                                    $keywordValues[] = $map[$val];
+                                    return false;
+                                }else{
+                                    return true;
+                                }
                             }else{
-                                return true;
+                                return false;
                             }
                         }
          );
+    }
+
+
+    public function __toString()
+    {
+        return $this->valueString;
+    }
+
+    public function setDirectiveValueGlue( $glue )
+    {
+        $this->directiveValueGlue = $glue;
     }
 }

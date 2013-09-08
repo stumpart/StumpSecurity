@@ -3,10 +3,13 @@
  * @author Barrington Henry <stump500@gmail.com>
  */
 
+
 namespace StumpSecurity\Http\Header\Values;
 
 
-class CSPReportURI extends AValues
+class MaxAge
 {
-    const REPORT_URI  = 'report-uri';
-}
+    const DIRECTIVE = 'max-age';
+
+    protected $directiveValueGlue = '=';
+} 

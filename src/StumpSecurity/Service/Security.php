@@ -1,17 +1,18 @@
 <?php
 /**
  * Created by JetBrains PhpStorm.
- * User: barringtonhenry
- * Date: 7/7/13
- * Time: 1:31 PM
- * To change this template use File | Settings | File Templates.
  */
 
 namespace StumpSecurity\Service;
 
+use StumpSecurity\Defenses\Verifier;
 use StumpSecurity\Http\Header\ContentSecurityPolicy;
+use StumpSecurity\Defenses\Cors;
+use Zend\Mvc\Router\Http\RouteMatch;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use StumpSecurity\Util\Arrays;
+
 
 class Security implements FactoryInterface
 {
@@ -26,6 +27,17 @@ class Security implements FactoryInterface
      */
     private $serviceLocator;
 
+
+    /**
+     * @var RouteMatch
+     */
+    private $routeMatch;
+
+    /**
+     * @var \StumpSecurity\Defenses\Verifier
+     */
+    private $verifier;
+
     /**
      * Create service
      *
@@ -37,12 +49,14 @@ class Security implements FactoryInterface
         $this->serviceLocator = $serviceLocator;
         $this->setConfig($serviceLocator);
 
-        $dir = $this->getRequestDirectives();
-
-
         return $this;
     }
 
+    public function triggerDefenses()
+    {
+        $this->verifier = new Verifier($this->config, $this->routeMatch);
+        $dir = $this->getRequestDirectives();
+    }
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
@@ -57,11 +71,28 @@ class Security implements FactoryInterface
      */
     public function getRequestDirectives()
     {
-        if(array_key_exists('xss', $this->config))
+        if($this->verifier->canApply('xss'))
         {
-            $con = new ContentSecurityPolicy($this->config);
-            $response = $this->serviceLocator->get('Response');
-            $response->getHeaders()->addHeader($con);
+            $xss = (array) Arrays::getRecursive($this->config, 'xss');
+            if(!empty($xss))
+            {
+                $con = new ContentSecurityPolicy($xss);
+                $con->setVerifier($this->verifier);
+                $con->setComponent('xss');
+                $con->execute();
+                $response = $this->serviceLocator->get('Response');
+                $response->getHeaders()->addHeader($con);
+            }
         }
+
+        if(array_key_exists('cross-origin', $this->config))
+        {
+            $cors = new Cors($this->serviceLocator);
+        }
+    }
+
+    public function setRouteMatch(RouteMatch $rm)
+    {
+        $this->routeMatch = $rm;
     }
 }

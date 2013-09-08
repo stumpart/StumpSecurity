@@ -11,6 +11,12 @@ class StrictTransportSecurity implements HeaderInterface
 {
     const HEADER_FIELD = 'Strict-Transport-Security';
 
+    private $data;
+
+    public function __construct()
+    {
+
+    }
 
     public static function fromString($headerLine)
     {
@@ -19,15 +25,20 @@ class StrictTransportSecurity implements HeaderInterface
 
     public function getFieldName()
     {
-
+        return HEADER_FIELD;
     }
 
     public function getFieldValue()
     {
-
+        return implode('; ', $this->data);
     }
 
     public function toString()
+    {
+        return static::HEADER_FIELD.': ' . $this->getFieldValue();
+    }
+
+    public function IncludeSubDomains()
     {
 
     }

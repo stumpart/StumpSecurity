@@ -10,7 +10,10 @@
 namespace StumpSecurity\Http\Header;
 namespace Zend\Http\Header;
 
-class ContentSecurityPolicyReport implements HeaderInterface
+use StumpSecurity\Defenses\Verifier;
+use StumpSecurity\Defenses\VerifierAwareInterface;
+
+class ContentSecurityPolicyReport implements HeaderInterface, VerifierAwareInterface
 {
     const HEADER_FIELD = 'Content-Security-Policy-Report-Only';
 
@@ -33,5 +36,10 @@ class ContentSecurityPolicyReport implements HeaderInterface
     public function toString()
     {
 
+    }
+
+    public function setVerifier(Verifier $v)
+    {
+        // TODO: Implement setVerifier() method.
     }
 }
